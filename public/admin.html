@@ -819,7 +819,7 @@ async function openEdit(id) {
   document.getElementById('edit-overlay').style.display = 'flex';
   document.getElementById('edit-form-body').innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px">Loading...</div>';
   try {
-    const res  = await authFetch(`/api/admin/clients/${id}`);
+    const res = await fetch(`/api/admin/clients/${id}`);
     const c    = await res.json();
     document.getElementById('edit-form-body').innerHTML = buildEditForm(c);
   } catch(e) {
