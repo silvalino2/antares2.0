@@ -79,8 +79,10 @@ router.post("/whatsapp/:clientId", async (req, res) => {
         }, 1200);
       }
     }  } catch (e) { console.error("WA error:", e); }
-  res.sendStatus(200);
-});
+  const twiml = new MessagingResponse();
+twiml.message(reply);
+res.type('text/xml');
+res.send(twiml.toString());
 
 // Status callback
 router.post("/status/:clientId", (req, res) => { res.sendStatus(200); });
