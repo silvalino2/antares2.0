@@ -901,7 +901,7 @@ async function saveEdit() {
   st.textContent = 'Saving...';
 
   try {
-    const res  = await authFetch(`/api/admin/clients/${editClientId}`, {
+    const res  = await fetch(`/api/admin/clients/${editClientId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
