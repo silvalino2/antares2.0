@@ -40,9 +40,11 @@ router.post("/whatsapp/:clientId", async (req, res) => {
     if (transcribed) {
       userMessage = transcribed;
     } else {
-      await sendWhatsApp(client, req.body.From, "Sorry, I couldn't process your voice note. Please type your message.");
-      return res.sendStatus(200);
-    }
+      const twiml = new MessagingResponse();
+twiml.message("Sorry, I couldn't process your voice note. Please type your message.");
+res.type('text/xml');
+return res.send(twiml.toString());
+    
   }
 
   if (!userMessage) return res.sendStatus(200);
