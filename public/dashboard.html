@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Outfit:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+:root{--primary:#00AAFF;--secondary:#4DC8FF;--bg:#060B10;--s1:#0A1018;--s2:#0F1822;--text:#E8F4FF;--muted:#5A7A90;--dim:#2A4A5A;--border:rgba(0,170,255,0.15);--border-hi:rgba(0,170,255,0.35);--green:#00D4AA;--red:#FF4C6A;--amber:#FFB84C;}
+*{margin:0;padding:0;box-sizing:border-box;}html,body{height:100%;background:var(--bg);color:var(--text);font-family:"Outfit",sans-serif;font-weight:300;}
+#login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:10px;}
+.lbox{width:340px;background:var(--s1);border:1px solid var(--border-hi);border-radius:16px;padding:38px;display:flex;flex-direction:column;gap:18px;}
+.lbrand{text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;}
+#l-logo{width:60px;height:60px;border-radius:14px;object-fit:cover;display:none;}
+#l-logoph{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:"Cormorant Garamond",serif;font-size:24px;font-weight:600;border:1px solid var(--border);background:var(--s2);color:var(--secondary);}
+#l-name{font-family:"Cormorant Garamond",serif;font-size:22px;color:var(--secondary);}
+#l-sub{font-size:10px;color:var(--dim);letter-spacing:.2em;text-transform:uppercase;}
+input.li{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:12px 14px;color:var(--text);font-family:"Outfit",sans-serif;font-size:13px;outline:none;transition:border .2s;}
+input.li:focus{border-color:var(--border-hi);}
+button.lb{width:100%;background:var(--primary);color:var(--bg);border:none;border-radius:9px;padding:13px;font-family:"Outfit",sans-serif;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;}
+button.lb:hover{opacity:.85;}
+.lerr{font-size:12px;color:var(--red);text-align:center;display:none;}
+#powered{font-size:10px;color:var(--dim);letter-spacing:.1em;}
+#app{display:none;grid-template-columns:230px 1fr;grid-template-rows:64px 1fr;height:100vh;}
+#app.on{display:grid;}
+.topbar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid var(--border);background:var(--s1);}
+.brand{display:flex;align-items:center;gap:12px;}
+#t-logo{width:34px;height:34px;border-radius:8px;object-fit:cover;display:none;}
+#t-logoph{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:"Cormorant Garamond",serif;font-size:14px;font-weight:600;background:var(--s2);color:var(--secondary);}
+#t-name{font-family:"Cormorant Garamond",serif;font-size:16px;color:var(--secondary);}
+#t-sub{font-size:9px;color:var(--dim);letter-spacing:.18em;text-transform:uppercase;margin-top:1px;}
+.tr{display:flex;align-items:center;gap:16px;}
+.lpill{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--green);letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border:1px solid rgba(76,175,122,.25);border-radius:16px;}
+.ldot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+#clock{font-size:12px;color:var(--muted);}
+.sidebar{background:var(--s1);border-right:1px solid var(--border);padding:18px 0;display:flex;flex-direction:column;}
+.nlbl{font-size:9px;color:var(--dim);letter-spacing:.18em;text-transform:uppercase;padding:0 18px;margin:12px 0 5px;}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 11px;margin:1px 8px;border-radius:7px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .2s;border:1px solid transparent;}
+.ni:hover{background:var(--s2);color:var(--text);}
+.ni.on{background:rgba(201,168,76,.07);border-color:var(--border);color:var(--secondary);}
+.nbadge{margin-left:auto;border-radius:9px;font-size:10px;font-weight:600;padding:1px 6px;background:var(--primary);color:var(--bg);}
+.nbadge.r{background:var(--red);color:#fff;}
+.sf{margin-top:auto;padding:14px;}
+.pcrd{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.pclbl{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:6px;}
+.pcnum{font-family:"Cormorant Garamond",serif;font-size:17px;color:var(--secondary);}
+.chs{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;}
+.ch{font-size:10px;padding:3px 8px;border-radius:10px;border:1px solid rgba(76,175,122,.35);color:var(--green);}
+.ob{width:100%;margin-top:10px;background:none;border:1px solid var(--border);border-radius:7px;padding:8px;color:var(--muted);font-family:"Outfit",sans-serif;font-size:12px;cursor:pointer;transition:all .2s;}
+.ob:hover{border-color:var(--red);color:var(--red);}
+.main{overflow-y:auto;padding:26px;display:flex;flex-direction:column;gap:20px;}
+.phdr{display:flex;align-items:flex-start;justify-content:space-between;}
+.ptitle{font-family:"Cormorant Garamond",serif;font-size:28px;font-weight:300;line-height:1.1;}
+.ptitle em{color:var(--secondary);font-style:italic;}
+.psub{font-size:11px;color:var(--dim);margin-top:4px;}
+.btn{padding:9px 16px;border-radius:7px;font-size:11px;font-family:"Outfit",sans-serif;font-weight:500;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;}
+.btn-p{background:var(--primary);color:var(--bg);}
+.btn-p:hover{opacity:.85;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;}
+.stat{background:var(--s1);border:1px solid var(--border);border-radius:11px;padding:16px 18px;position:relative;overflow:hidden;transition:border-color .25s;}
+.stat:hover{border-color:var(--border-hi);}
+.stat::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--primary),transparent);opacity:0;transition:.3s;}
+.stat:hover::before{opacity:1;}
+.slbl{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:8px;}
+.sval{font-family:"Cormorant Garamond",serif;font-size:34px;font-weight:300;line-height:1;}
+.sval.a{color:var(--secondary);}
+.sval.g{color:var(--green);}
+.sinfo{font-size:10px;color:var(--dim);margin-top:4px;}
+.sico{position:absolute;top:14px;right:14px;font-size:18px;opacity:.1;}
+.cgrid{display:grid;grid-template-columns:1fr 340px;gap:18px;}
+.panel{background:var(--s1);border:1px solid var(--border);border-radius:11px;overflow:hidden;}
+.ph{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.pt{font-family:"Cormorant Garamond",serif;font-size:16px;}
+.pl{font-size:11px;color:var(--dim);cursor:pointer;transition:color .2s;}
+.pl:hover{color:var(--primary);}
+.ftabs{display:flex;gap:6px;padding:10px 18px;border-bottom:1px solid var(--border);}
+.tab{padding:4px 11px;border-radius:16px;font-size:11px;cursor:pointer;border:1px solid var(--border);color:var(--muted);transition:all .15s;}
+.tab.on{background:rgba(201,168,76,.08);border-color:var(--border-hi);color:var(--secondary);}
+.orow{display:grid;grid-template-columns:70px 1fr 120px 90px 110px 90px;align-items:center;padding:11px 18px;gap:10px;border-bottom:1px solid rgba(201,168,76,.04);transition:background .15s;cursor:pointer;}
+.orow:hover{background:var(--s2);}
+.orow.head{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);cursor:default;border-bottom:1px solid var(--border);}
+.orow.head:hover{background:none;}
+.oid{font-family:"Cormorant Garamond",serif;font-size:14px;color:var(--dim);}
+.oname{font-size:13px;font-weight:400;}
+.och{font-size:10px;color:var(--dim);}
+.oamt{font-size:13px;}
+.pill{font-size:10px;padding:3px 9px;border-radius:16px;letter-spacing:.05em;text-transform:uppercase;font-weight:500;display:inline-block;}
+.pill.new{background:rgba(76,138,201,.15);color:#4C8AC9;border:1px solid rgba(76,138,201,.25);}
+.pill.confirmed,.pill.preparing{background:rgba(201,138,76,.15);color:var(--amber);border:1px solid rgba(201,138,76,.25);}
+.pill.ready{background:rgba(76,175,122,.15);color:var(--green);border:1px solid rgba(76,175,122,.25);}
+.pill.delivered,.pill.completed{background:rgba(76,175,122,.08);color:#3a9e62;border:1px solid rgba(76,175,122,.12);}
+.pst{font-size:11px;}
+.pst.ok{color:var(--green);}
+.pst.pend{color:var(--dim);}
+.ssel{background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 6px;font-family:"Outfit",sans-serif;font-size:11px;cursor:pointer;outline:none;}
+.afeed{display:flex;flex-direction:column;}
+.aitem{padding:12px 18px;border-bottom:1px solid rgba(201,168,76,.04);display:flex;gap:10px;transition:background .15s;}
+.aitem:hover{background:var(--s2);}
+.aico{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;background:var(--s2);border:1px solid var(--border);color:var(--secondary);}
+.atext{font-size:12px;color:var(--muted);line-height:1.45;flex:1;}
+.atext strong{color:var(--text);font-weight:400;}
+.atime{font-size:10px;color:var(--dim);margin-top:2px;}
+.vform{padding:16px 18px;display:flex;flex-direction:column;gap:8px;}
+.vi{background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-family:"Outfit",sans-serif;font-size:12px;outline:none;transition:border .2s;width:100%;}
+.vi:focus{border-color:var(--border-hi);}
+.vbtn{background:var(--primary);color:var(--bg);border:none;border-radius:7px;padding:10px;font-size:11px;font-family:"Outfit",sans-serif;font-weight:600;cursor:pointer;letter-spacing:.07em;text-transform:uppercase;width:100%;}
+.mov{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:500;padding:20px;}
+.mov.open{display:flex;}
+.modal{background:var(--s1);border:1px solid var(--border-hi);border-radius:14px;width:100%;max-width:460px;max-height:88vh;overflow-y:auto;}
+.mh{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--s1);}
+.mt{font-family:"Cormorant Garamond",serif;font-size:20px;}
+.mc{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;}
+.mbd{padding:20px 22px;display:flex;flex-direction:column;gap:12px;}
+.mr{display:flex;justify-content:space-between;font-size:13px;}
+.mr .l{color:var(--muted);}
+.mitems{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px;}
+.mitem{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid rgba(201,168,76,.05);}
+.mitem:last-child{border:none;}
+.mtotal{display:flex;justify-content:space-between;font-family:"Cormorant Garamond",serif;font-size:20px;padding-top:8px;}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--s2);border:1px solid var(--border-hi);border-radius:9px;padding:12px 16px;font-size:13px;z-index:9990;transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none;display:flex;align-items:center;gap:8px;max-width:300px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.fi{animation:fu .35s ease forwards;opacity:0;}
+@keyframes fu{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* Escalation Alert */
+#esc-overlay{position:fixed;inset:0;background:rgba(6,11,16,0.85);z-index:9000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+#esc-overlay.show{display:flex;}
+#esc-box{background:var(--s1);border:1.5px solid var(--red);border-radius:16px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 0 40px rgba(255,76,106,0.25);animation:esc-in .3s ease;}
+@keyframes esc-in{from{transform:scale(.92);opacity:0;}to{transform:scale(1);opacity:1;}}
+.esc-title{color:var(--red);font-size:13px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;}
+.esc-head{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);margin-bottom:16px;}
+.esc-detail{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.esc-msg{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--text);margin-bottom:20px;font-style:italic;}
+.esc-btns{display:flex;gap:10px;}
+.esc-btn-dismiss{flex:1;padding:11px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-family:'Outfit',sans-serif;font-size:12px;cursor:pointer;transition:all .2s;}
+.esc-btn-dismiss:hover{border-color:var(--border-hi);color:var(--text);}
+.esc-btn-call{flex:1;padding:11px;border-radius:8px;border:none;background:var(--primary);color:var(--bg);font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
+.esc-btn-call:hover{opacity:.85;}
+.esc-pulse{width:10px;height:10px;border-radius:50%;background:var(--red);animation:pulse-red 1s infinite;display:inline-block;margin-right:6px;}
+@keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(255,76,106,.6);}70%{box-shadow:0 0 0 8px rgba(255,76,106,0);}}
+</style>
+</head>
+<body>
+<div id="login">
+  <div class="lbox">
+    <div class="lbrand">
+      <img id="l-logo" src="" alt="" style="display:none"/><div id="l-logoph" style="display:none">✦</div><div id="l-antares-mark"><svg width="36" height="42" viewBox="0 0 82 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="ag"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="ags"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <linearGradient id="al" x1="41" y1="4" x2="41" y2="92" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#00D4FF"/><stop offset="100%" stop-color="#0055AA"/></linearGradient>
+    <linearGradient id="ac" x1="14" y1="62" x2="68" y2="62" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#0088CC"/><stop offset="50%" stop-color="#00C8FF"/><stop offset="100%" stop-color="#0088CC"/></linearGradient>
+  </defs>
+  <line x1="41" y1="6" x2="6" y2="90" stroke="url(#al)" stroke-width="3.5" stroke-linecap="round" filter="url(#ag)"/>
+  <line x1="41" y1="6" x2="76" y2="90" stroke="url(#al)" stroke-width="3.5" stroke-linecap="round" filter="url(#ag)"/>
+  <line x1="18" y1="62" x2="64" y2="62" stroke="url(#ac)" stroke-width="2.5" stroke-linecap="round" filter="url(#ag)"/>
+  <line x1="64" y1="62" x2="76" y2="62" stroke="rgba(0,180,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="18" y1="62" x2="6" y2="62" stroke="rgba(0,180,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="41" cy="6" r="5" fill="#050607" stroke="#00D4FF" stroke-width="1.5" filter="url(#ag)"/>
+  <circle cx="41" cy="6" r="2.2" fill="#00D4FF" filter="url(#ags)"/>
+  <circle cx="41" cy="6" r="10" fill="none" stroke="rgba(0,212,255,0.12)" stroke-width="1"/>
+  <circle cx="18" cy="62" r="3.8" fill="#050607" stroke="#00AADD" stroke-width="1.5" filter="url(#ag)"/>
+  <circle cx="18" cy="62" r="1.6" fill="#00AADD"/>
+  <circle cx="64" cy="62" r="3.8" fill="#050607" stroke="#00AADD" stroke-width="1.5" filter="url(#ag)"/>
+  <circle cx="64" cy="62" r="1.6" fill="#00AADD"/>
+  <circle cx="6" cy="90" r="3.8" fill="#050607" stroke="#0077BB" stroke-width="1.5" filter="url(#ag)"/>
+  <circle cx="6" cy="90" r="1.6" fill="#0077BB"/>
+  <circle cx="76" cy="90" r="3.8" fill="#050607" stroke="#0077BB" stroke-width="1.5" filter="url(#ag)"/>
+  <circle cx="76" cy="90" r="1.6" fill="#0077BB"/>
+</svg></div>
+      <div><div id="l-name">Antares</div><div id="l-sub">AI Agent Dashboard</div></div>
+    </div>
+    <input class="li" type="text" id="l-id" placeholder="Business ID" style="display:none"/>
+    <input class="li" type="password" id="l-pw" placeholder="Staff password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="lb" onclick="doLogin()">Enter Dashboard</button>
+    <div class="lerr" id="lerr">Incorrect password.</div>
+  </div>
+  <div id="powered" style="display:flex;align-items:center;gap:0;opacity:0.5;margin-top:4px;"><svg width="28" height="33" viewBox="0 0 82 96" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><filter id="ag"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="ags"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="al" x1="41" y1="4" x2="41" y2="92" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#00D4FF"/><stop offset="100%" stop-color="#0055AA"/></linearGradient><linearGradient id="ac" x1="14" y1="62" x2="68" y2="62" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#0088CC"/><stop offset="50%" stop-color="#00C8FF"/><stop offset="100%" stop-color="#0088CC"/></linearGradient></defs><line x1="41" y1="6" x2="6" y2="90" stroke="url(#al)" stroke-width="3.5" stroke-linecap="round" filter="url(#ag)"/><line x1="41" y1="6" x2="76" y2="90" stroke="url(#al)" stroke-width="3.5" stroke-linecap="round" filter="url(#ag)"/><line x1="18" y1="62" x2="64" y2="62" stroke="url(#ac)" stroke-width="2.5" stroke-linecap="round" filter="url(#ag)"/><line x1="64" y1="62" x2="76" y2="62" stroke="rgba(0,180,255,0.3)" stroke-width="1.5" stroke-linecap="round"/><line x1="18" y1="62" x2="6" y2="62" stroke="rgba(0,180,255,0.3)" stroke-width="1.5" stroke-linecap="round"/><circle cx="41" cy="6" r="5" fill="#050607" stroke="#00D4FF" stroke-width="1.5" filter="url(#ag)"/><circle cx="41" cy="6" r="2.2" fill="#00D4FF" filter="url(#ags)"/><circle cx="41" cy="6" r="10" fill="none" stroke="rgba(0,212,255,0.12)" stroke-width="1"/><circle cx="18" cy="62" r="3.8" fill="#050607" stroke="#00AADD" stroke-width="1.5" filter="url(#ag)"/><circle cx="18" cy="62" r="1.6" fill="#00AADD"/><circle cx="64" cy="62" r="3.8" fill="#050607" stroke="#00AADD" stroke-width="1.5" filter="url(#ag)"/><circle cx="64" cy="62" r="1.6" fill="#00AADD"/><circle cx="6" cy="90" r="3.8" fill="#050607" stroke="#0077BB" stroke-width="1.5" filter="url(#ag)"/><circle cx="6" cy="90" r="1.6" fill="#0077BB"/><circle cx="76" cy="90" r="3.8" fill="#050607" stroke="#0077BB" stroke-width="1.5" filter="url(#ag)"/><circle cx="76" cy="90" r="1.6" fill="#0077BB"/></svg><span style="font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:300;letter-spacing:0.18em;color:#D8EEF8;margin-left:-1px;">NTARES</span></div>
+</div>
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><img id="t-logo" src="" alt="" style="display:none"/><div id="t-logoph" style="display:none">✦</div><div id="antares-nav-logo" style="display:flex;align-items:center;gap:0;margin-right:6px;"><svg width="28" height="33" viewBox="0 0 82 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="ag"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="ags"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <linearGradient id="al" x1="41" y1="4" x2="41" y2="92" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#00D4FF"/><stop offset="100%" stop-color="#0055AA"/></linearGradient>
+    <linearGradient id="ac" x1="14" y1="62" x2="68" y2="62" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#0088CC"/><stop offset="50%" stop-color="#00C8FF"/><stop offset="100%" stop-color="#0088CC"/></linearGradient>
+  </defs>
+  <line x1="41" y1="6" x2="6" y2="90" stroke="url(#al)" stroke-width="3.5" stroke-linecap="round" filter="url(#ag)"/>
+  <line x1="41" y1="6" x2="76" y2="90" stroke="url(#al)" stroke-width="3.5" stroke-linecap="round" filter="url(#ag)"/>
+  <line x1="18" y1="62" x2="64" y2="62" stroke="url(#ac)" stroke-width="2.5" stroke-linecap="round" filter="url(#ag)"/>
+  <line x1="64" y1="62" x2="76" y2="62" stroke="rgba(0,180,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="18" y1="62" x2="6" y2="62" stroke="rgba(0,180,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="41" cy="6" r="5" fill="#050607" stroke="#00D4FF" stroke-width="1.5" filter="url(#ag)"/>
+  <circle cx="41" cy="6" r="2.2" fill="#00D4FF" filter="url(#ags)"/>
+  <circle cx="41" cy="6" r="10" fill="none" stroke="rgba(0,212,255,0.12)" stroke-width="1"/>
+  <circle cx="18" cy="62" r="3.8" fill="#050607" stroke="#00AADD" stroke-width="1.5" filter="url(#ag)"/>
+  <circle cx="18" cy="62" r="1.6" fill="#00AADD"/>
+  <circle cx="64" cy="62" r="3.8" fill="#050607" stroke="#00AADD" stroke-width="1.5" filter="url(#ag)"/>
+  <circle cx="64" cy="62" r="1.6" fill="#00AADD"/>
+  <circle cx="6" cy="90" r="3.8" fill="#050607" stroke="#0077BB" stroke-width="1.5" filter="url(#ag)"/>
+  <circle cx="6" cy="90" r="1.6" fill="#0077BB"/>
+  <circle cx="76" cy="90" r="3.8" fill="#050607" stroke="#0077BB" stroke-width="1.5" filter="url(#ag)"/>
+  <circle cx="76" cy="90" r="1.6" fill="#0077BB"/>
+</svg></div><div><div id="t-name" style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:300;letter-spacing:0.12em;color:#D8EEF8;">—</div><div id="t-sub" style="font-size:9px;color:rgba(0,180,255,0.4);letter-spacing:.18em;text-transform:uppercase;margin-top:1px;">AI Agent</div></div></div>
+    <div class="tr"><div class="lpill"><div class="ldot"></div>Agent Live</div><div id="clock">—</div></div>
+  </header>
+  <aside class="sidebar">
+    <div class="nlbl">Overview</div>
+    <div class="ni on" onclick="sv('dash')">⊞ Dashboard <span class="nbadge" id="nb-p">—</span></div>
+    <div class="ni" onclick="sv('orders')">📋 Orders <span class="nbadge r" id="nb-n">—</span></div>
+    <div class="ni" onclick="sv('payments')">₦ Payments</div>
+    <div class="sf">
+      <div class="pcrd"><div class="pclbl">Active Line</div><div class="pcnum" id="pcnum">—</div>
+        <div class="chs"><div class="ch">📞 Calls</div><div class="ch">SMS</div><div class="ch" id="wa-ch" style="display:none">💬 WhatsApp</div></div>
+      </div>
+      <button id="report-btn" onclick="showReport()" style="display:none;background:var(--primary);color:var(--bg);border:none;border-radius:8px;padding:8px 14px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;margin-bottom:8px;width:100%;align-items:center;justify-content:center;gap:6px;">📊 Monthly Report</button>
+      <button class="ob" onclick="doLogout()">Sign Out</button>
+    </div>
+  </aside>
+  <main class="main">
+    <div id="v-dash">
+      <div class="phdr fi">
+        <div><div class="ptitle">Good <span id="tod">evening</span>, <em id="bname">your agent</em> is live.</div><div class="psub" id="dsub">—</div></div>
+        <button class="btn btn-p" onclick="exportCSV()">Export Report</button>
+      </div>
+      <div class="stats fi">
+        <div class="stat"><div class="slbl">Orders Today</div><div class="sval a" id="s-t">—</div><div class="sinfo" id="s-ch">—</div><div class="sico">📋</div></div>
+        <div class="stat"><div class="slbl">Pending</div><div class="sval" id="s-p">—</div><div class="sinfo">Need attention</div><div class="sico">⏳</div></div>
+        <div class="stat"><div class="slbl">Revenue</div><div class="sval g" id="s-r">—</div><div class="sinfo" id="s-v">—</div><div class="sico">₦</div></div>
+        <div class="stat"><div class="slbl">Calls</div><div class="sval" id="s-c">—</div><div class="sinfo" id="s-sw">—</div><div class="sico">📞</div></div>
+      </div>
+      <div class="cgrid">
+        <div class="panel fi">
+          <div class="ph"><div class="pt">Recent Orders</div><span class="pl" onclick="sv('orders')">View all →</span></div>
+          <div class="ftabs"><div class="tab on" onclick="ft('all',this)">All</div><div class="tab" onclick="ft('new',this)">New</div><div class="tab" onclick="ft('preparing',this)">Preparing</div><div class="tab" onclick="ft('ready',this)">Ready</div></div>
+          <div class="orow head"><div>#</div><div>Customer</div><div>Items</div><div>Amount</div><div>Status</div><div>Payment</div></div>
+          <div id="otb"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="panel fi"><div class="ph"><div class="pt">Live Activity</div></div><div class="afeed" id="afeed"><div style="padding:18px;text-align:center;color:var(--dim);font-size:12px;">Waiting...</div></div></div>
+          <div class="panel fi"><div class="ph"><div class="pt">Verify Payment</div></div>
+            <div class="vform"><input class="vi" id="v-oid" placeholder="Order ID (ORD-007)"/><input class="vi" id="v-ref" placeholder="Payment reference"/><button class="vbtn" onclick="verifyPay()">Verify Payment</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="v-orders" style="display:none">
+      <div class="phdr fi"><div><div class="ptitle">All <em>Orders</em></div><div class="psub">Full history</div></div></div>
+      <div class="panel fi">
+        <div class="ph"><div class="pt">Order History</div><span class="pl" onclick="loadOrders()">↻ Refresh</span></div>
+        <div class="ftabs"><div class="tab on" onclick="ft('all',this)">All</div><div class="tab" onclick="ft('new',this)">New</div><div class="tab" onclick="ft('preparing',this)">Preparing</div><div class="tab" onclick="ft('ready',this)">Ready</div><div class="tab" onclick="ft('delivered',this)">Delivered</div></div>
+        <div class="orow head"><div>#</div><div>Customer</div><div>Items</div><div>Amount</div><div>Status</div><div>Payment</div></div>
+        <div id="aotb"></div>
+      </div>
+    </div>
+    <div id="v-payments" style="display:none">
+      <div class="phdr fi"><div><div class="ptitle"><em>Payments</em></div></div></div>
+      <div class="panel fi"><div class="ph"><div class="pt">Payment Records</div></div><div id="pbody"></div></div>
+    </div>
+    <div id="v-availability" style="display:none">
+      <div class="phdr fi">
+        <div><div class="ptitle"><em>Menu</em> & Availability</div><div class="psub">Toggle items on/off and manage your menu</div></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="avail-reset-btn" onclick="resetAvailability()">↺ Reset All Available</button>
+          <button class="btn btn-p" onclick="openAddItemModal()" style="font-size:11px;padding:8px 14px;">+ Add Item</button>
+        </div>
+      </div>
+
+      <!-- Availability toggle panel -->
+      <div class="panel fi">
+        <div class="ph">
+          <div class="pt">Toggle Items On / Off</div>
+          <div style="font-size:10px;color:var(--muted)">Untick to mark unavailable. Agent updates immediately.</div>
+        </div>
+        <div id="avail-grid" class="avail-grid" style="padding:0 16px 16px"></div>
+      </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="add-item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:var(--s1);border:1px solid var(--border-hi);border-radius:14px;width:100%;max-width:400px;padding:24px;display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;">Add Menu Item</div>
+          <button onclick="closeAddItemModal()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;">✕</button>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em;">Item Name *</div>
+          <input id="ni-name" placeholder="e.g. Jollof Rice + Chicken" class="vi" style="width:100%;"/>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em;">Category</div>
+          <input id="ni-cat" placeholder="e.g. Food, Drinks, Extras" class="vi" style="width:100%;"/>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em;">Price (₦)</div>
+          <input id="ni-price" type="number" placeholder="0" class="vi" style="width:100%;"/>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em;">Description (optional)</div>
+          <input id="ni-desc" placeholder="Short description" class="vi" style="width:100%;"/>
+        </div>
+        <div id="ni-err" style="font-size:11px;color:var(--red);display:none;"></div>
+        <button onclick="submitAddItem()" class="vbtn">Add to Menu</button>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="mov" id="mov" onclick="if(event.target===this)cm()"><div class="modal"><div class="mh"><div class="mt" id="mt">Order</div><button class="mc" onclick="cm()">✕</button></div><div class="mbd" id="mb"></div></div></div>
+<div class="toast" id="toast"><span id="ti">✦</span><span id="tm">—</span></div>
+<script>
+let orders=[],acts=[],cF="all",cd=null;
+const uid=new URLSearchParams(location.search).get("id");
+if(!uid)document.getElementById("l-id").style.display="block";
+
+async function doLogin(){
+  const cid=uid||document.getElementById("l-id").value.trim();
+  const pw=document.getElementById("l-pw").value;
+  if(!cid){showErr("Enter Business ID");return;}
+  const r=await fetch("/api/client/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({clientId:cid,password:pw})});
+  const d=await r.json();
+  if(r.ok&&d.success){cd=d.client;applyBrand(cd);document.getElementById("login").style.display="none";document.getElementById("app").classList.add("on");init();}
+  else{document.getElementById("lerr").style.display="block";}
+}
+async function doLogout(){await fetch("/api/client/logout",{method:"POST"});location.reload();}
+function showErr(m){const e=document.getElementById("lerr");e.textContent=m;e.style.display="block";}
+
+function applyBrand(c){
+  const col=c.colors||{};
+  const vars={primary:col.primary,secondary:col.secondary,accent:col.accent,bg:col.bg,"--s1":col.surface,"--s2":col.surface2,text:col.text,muted:col.muted,border:col.border};
+  if(col.primary)document.documentElement.style.setProperty("--primary",col.primary);
+  if(col.secondary)document.documentElement.style.setProperty("--secondary",col.secondary);
+  if(col.bg)document.documentElement.style.setProperty("--bg",col.bg);
+  if(col.surface)document.documentElement.style.setProperty("--s1",col.surface);
+  if(col.surface2)document.documentElement.style.setProperty("--s2",col.surface2);
+  if(col.text)document.documentElement.style.setProperty("--text",col.text);
+  if(col.muted)document.documentElement.style.setProperty("--muted",col.muted);
+  if(col.border)document.documentElement.style.setProperty("--border",col.border);
+  if(c.logoUrl){
+    ["l-logo","t-logo"].forEach(id=>{const el=document.getElementById(id);el.src=c.logoUrl;el.style.display="block";el.onerror=()=>el.style.display="none";});
+    document.getElementById("l-logoph").style.display="none";
+    document.getElementById("t-logoph").style.display="none";
+  } else {
+    const init=c.businessName.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
+    ["l-logoph","t-logoph"].forEach(id=>{const el=document.getElementById(id);el.textContent=init;});
+  }
+  document.title=c.businessName+" · Dashboard";
+  document.getElementById("l-name").textContent=c.businessName;
+  document.getElementById("t-name").textContent=c.businessName;
+  document.getElementById("bname").textContent=c.businessName;
+  document.getElementById("pcnum").textContent=c.publicPhone||c.phone||"—";
+  if(c.whatsappNumber)document.getElementById("wa-ch").style.display="";
+}
+
+function init(){
+  tick();setInterval(tick,1000);
+  const now=new Date();
+  document.getElementById("dsub").textContent=now.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const h=now.getHours();
+  document.getElementById("tod").textContent=h<12?"morning":h<17?"afternoon":"evening";
+  loadStats();loadOrders();
+  const s=io();s.emit("join",cd.id);
+  s.on("new_order",o=>{orders.unshift(o);renderOrders();loadStats();addAct({e:"✦",t:"<strong>New "+o.channel+" order</strong> from "+o.customer,ts:"Just now"});toast("✦","New order "+o.id+"!");});
+  s.on("escalation_needed",e=>{showEscalation(e);});
+  s.on("payment_wa_pending",e=>{
+    addAct({e:"💳", t:"<strong>Payment via WhatsApp:</strong> Customer " + e.phone + " was directed to WhatsApp for payment details.", ts:"Just now"});
+    toast("💳", "Customer directed to WhatsApp for payment");
+  });
+  s.on("order_updated:"+cd.id,o=>{const i=orders.findIndex(x=>x.id===o.id);if(i>=0)orders[i]=o;renderOrders();});
+  s.on("payment_verified:"+cd.id,o=>{const i=orders.findIndex(x=>x.id===o.id);if(i>=0)orders[i]=o;renderOrders();loadStats();toast("₦","Payment verified for "+o.id);addAct({e:"₦",t:"<strong>Payment verified</strong> — "+o.id,ts:"Just now"});});
+}
+
+function tick(){document.getElementById("clock").textContent=new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",second:"2-digit"});}
+
+async function loadStats(){
+  const s=await fetch("/api/client/stats").then(r=>r.json());
+  document.getElementById("s-t").textContent=s.totalToday;
+  document.getElementById("s-p").textContent=s.pending;
+  document.getElementById("s-r").textContent="₦"+(s.todayRevenue/1000).toFixed(0)+"k";
+  document.getElementById("s-v").textContent=s.verified+" verified";
+  document.getElementById("s-c").textContent=s.calls;
+  document.getElementById("s-ch").textContent=s.calls+" calls · "+s.sms+" SMS · "+s.wa+" WA";
+  document.getElementById("s-sw").textContent=s.sms+" SMS · "+s.wa+" WhatsApp";
+  document.getElementById("nb-p").textContent=s.pending;
+  document.getElementById("nb-n").textContent=s.totalToday;
+}
+
+async function loadOrders(){orders=await fetch("/api/client/orders").then(r=>r.json());renderOrders();renderPays();}
+
+function renderOrders(){
+  const f=cF==="all"?orders:orders.filter(o=>o.status===cF);
+  const html=f.map(o=>{
+    const ch=o.channel==="call"?"📞 Call":o.channel==="whatsapp"?"💬 WA":"✉ SMS";
+    const items=o.items?.map(i=>i.name).join(", ")||"—";
+    return `<div class="orow" onclick="openOrd('${o.id}')"><div class="oid">${o.id}</div><div><div class="oname">${o.customer}</div><div class="och">${ch}</div></div><div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${items}</div><div class="oamt">₦${o.total?.toLocaleString()}</div><div><select class="ssel" onclick="event.stopPropagation()" onchange="updS('${o.id}',this.value)">${["new","confirmed","preparing","ready","delivered","completed"].map(s=>`<option value="${s}"${o.status===s?" selected":""}>${s[0].toUpperCase()+s.slice(1)}</option>`).join("")}</select></div><div class="pst ${o.paymentStatus==="verified"?"ok":"pend"}">${o.paymentStatus==="verified"?"✓ Verified":"⏳ Pending"}</div></div>`;
+  }).join("");
+  const emp='<div style="padding:24px;text-align:center;color:var(--dim);font-size:13px;">No orders found.</div>';
+  document.getElementById("otb").innerHTML=f.length?html:emp;
+  document.getElementById("aotb").innerHTML=f.length?html:emp;
+}
+
+function ft(f,el){cF=f;el.closest(".panel,.main").querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));el.classList.add("on");renderOrders();}
+
+async function updS(id,s){
+  await fetch("/api/client/orders/"+id+"/status",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:s})});
+  const i=orders.findIndex(o=>o.id===id);if(i>=0)orders[i].status=s;
+  toast("📋",id+" → "+s);
+}
+
+function openOrd(id){
+  const o=orders.find(o=>o.id===id);if(!o)return;
+  document.getElementById("mt").textContent="Order "+o.id;
+  document.getElementById("mb").innerHTML=`<div class="mr"><span class="l">Customer</span><span>${o.customer}</span></div><div class="mr"><span class="l">Phone</span><span>${o.phone}</span></div><div class="mr"><span class="l">Channel</span><span>${o.channel}</span></div><div class="mr"><span class="l">Status</span><span><span class="pill ${o.status}">${o.status}</span></span></div><div class="mr"><span class="l">Payment</span><span>${o.paymentStatus==="verified"?"✅ Verified":"⏳ Pending"}</span></div>${o.paymentRef?'<div class="mr"><span class="l">Ref</span><span>'+o.paymentRef+'</span></div>':""}<div class="mr"><span class="l">Placed</span><span>${new Date(o.createdAt).toLocaleString()}</span></div><div class="mitems"><div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);margin-bottom:8px;">Items</div>${(o.items||[]).map(i=>`<div class="mitem"><span>${i.qty||1}× ${i.name}</span><span style="color:var(--secondary)">₦${((i.price||0)*(i.qty||1)).toLocaleString()}</span></div>`).join("")}<div class="mtotal"><span style="font-family:'Outfit',sans-serif;font-size:12px;color:var(--muted);align-self:center;">Total</span><span style="color:var(--secondary)">₦${o.total?.toLocaleString()}</span></div></div>`;
+  document.getElementById("mov").classList.add("open");
+}
+function cm(){document.getElementById("mov").classList.remove("open");}
+
+function renderPays(){
+  document.getElementById("pbody").innerHTML=orders.map(o=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(201,168,76,.04);gap:12px;"><div><div style="font-size:12px;color:var(--text);">${o.paymentRef||"No ref"} · ${o.id}</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">${o.customer}</div></div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--secondary);">₦${o.total?.toLocaleString()}</div><div style="font-size:10px;padding:3px 9px;border-radius:10px;border:1px solid ${o.paymentStatus==="verified"?"rgba(76,175,122,.3)":"rgba(201,168,76,.2)"};color:${o.paymentStatus==="verified"?"var(--green)":"var(--dim)"};">${o.paymentStatus==="verified"?"✓ Verified":"⏳ Pending"}</div></div>`).join("")||'<div style="padding:24px;text-align:center;color:var(--dim);">No payments yet.</div>';
+}
+
+async function verifyPay(){
+  const oid=document.getElementById("v-oid").value.trim(),ref=document.getElementById("v-ref").value.trim();
+  if(!oid||!ref){toast("⚠","Enter Order ID and reference");return;}
+  const r=await fetch("/api/client/verify-payment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderId:oid,paymentRef:ref})});
+  const d=await r.json();
+  toast(d.success?"✅":"⚠",d.success?"Payment verified for "+oid:d.message||"Failed");
+  if(d.success){document.getElementById("v-oid").value="";document.getElementById("v-ref").value="";loadOrders();loadStats();}
+}
+
+function addAct({e,t,ts}){
+  acts.unshift({e,t,ts});if(acts.length>15)acts.pop();
+  document.getElementById("afeed").innerHTML=acts.slice(0,8).map(a=>`<div class="aitem"><div class="aico">${a.e}</div><div><div class="atext">${a.t}</div><div class="atime">${a.ts}</div></div></div>`).join("");
+}
+
+function sv(v){
+  ["dash","orders","payments"].forEach(n=>document.getElementById("v-"+n).style.display=n===v?"":"none");
+  if(v==="dash"){loadStats();renderOrders();}
+  if(v==="payments")renderPays();
+}
+
+function toast(ico,msg){
+  document.getElementById("ti").textContent=ico;document.getElementById("tm").textContent=msg;
+  const t=document.getElementById("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3500);
+}
+
+function exportCSV(){
+  const rows=[["Order ID","Customer","Phone","Channel","Items","Total","Status","Payment","Date"]];
+  orders.forEach(o=>rows.push([o.id,o.customer,o.phone,o.channel,(o.items||[]).map(i=>i.name).join("|"),o.total,o.status,o.paymentStatus,new Date(o.createdAt).toLocaleString()]));
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([rows.map(r=>r.join(",")).join("\n")],{type:"text/csv"}));
+  a.download="orders-"+Date.now()+".csv";a.click();
+}
+</script>
+
+<!-- Escalation Alert Modal -->
+<div id="esc-overlay">
+  <div id="esc-box">
+    <div class="esc-title"><span class="esc-pulse"></span>Human Attention Required</div>
+    <div class="esc-head">Customer needs you</div>
+    <div id="esc-detail" class="esc-detail">Loading...</div>
+    <div id="esc-msg" class="esc-msg"></div>
+    <div class="esc-btns">
+      <button class="esc-btn-dismiss" onclick="dismissEsc()">Dismiss</button>
+      <button class="esc-btn-call" id="esc-call-btn" onclick="callCustomer()">📞 Call Customer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let escPhone = '';
+function showEscalation(e) {
+  escPhone = e.phone || '';
+  document.getElementById('esc-detail').innerHTML =
+    `Phone: <strong style="color:var(--text)">${e.phone||'Unknown'}</strong> &nbsp;·&nbsp; 
+     Channel: <strong style="color:var(--text)">${e.channel||'—'}</strong> &nbsp;·&nbsp; 
+     Time: <strong style="color:var(--text)">${new Date(e.timestamp||Date.now()).toLocaleTimeString()}</strong>`;
+  document.getElementById('esc-msg').textContent = e.message || 'Customer requested human assistance.';
+  document.getElementById('esc-overlay').classList.add('show');
+  // Play alert sound
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 200, 400].forEach(delay => {
+      setTimeout(() => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+      }, delay);
+    });
+  } catch(err) {}
+  // Badge update
+  addAct({e:'🔴', t:'<strong>Escalation:</strong> Customer needs human help — ' + (e.phone||''), ts:'Just now'});
+}
+function dismissEsc() {
+  document.getElementById('esc-overlay').classList.remove('show');
+  escPhone = '';
+}
+function callCustomer() {
+  if (escPhone) window.open('tel:' + escPhone);
+  dismissEsc();
+}
+</script>
+
+<!-- Monthly Report Modal (Premium only) -->
+<div id="report-overlay" style="display:none;position:fixed;inset:0;background:rgba(6,11,16,0.9);z-index:8000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:var(--s1);border:1px solid var(--border-hi);border-radius:16px;padding:28px 32px;max-width:560px;width:92%;max-height:80vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="color:var(--primary);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;">Monthly Performance Report</div>
+      <button onclick="document.getElementById('report-overlay').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;">✕</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:20px;">
+      <select id="rpt-month" style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:inherit;font-size:12px;">
+        <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+        <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+        <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+        <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+      </select>
+      <input id="rpt-year" type="number" value="2026" min="2025" max="2030"
+        style="width:90px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:inherit;font-size:12px;"/>
+      <button onclick="loadReport()" style="background:var(--primary);color:var(--bg);border:none;border-radius:8px;padding:8px 18px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;">Generate</button>
+    </div>
+    <div id="rpt-content" style="color:var(--muted);font-size:12px;text-align:center;padding:20px 0;">Select a month and click Generate.</div>
+  </div>
+</div>
+
+<script>
+// Set current month as default
+(function(){
+  const now = new Date();
+  document.getElementById('rpt-month').value = now.getMonth() + 1;
+  document.getElementById('rpt-year').value  = now.getFullYear();
+})();
+
+function showReport() {
+  document.getElementById('report-overlay').style.display = 'flex';
+}
+
+async function loadReport() {
+  const month = document.getElementById('rpt-month').value;
+  const year  = document.getElementById('rpt-year').value;
+  const el    = document.getElementById('rpt-content');
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">Generating report...</div>';
+  try {
+    const res  = await fetch(`/api/admin/clients/${cd.id}/report?month=${month}&year=${year}`, { credentials:'include' });
+    const data = await res.json();
+    if (data.error) { el.innerHTML = `<div style="color:var(--red);text-align:center;padding:20px">${data.error}</div>`; return; }
+
+    el.innerHTML = `
+      <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+        <div style="color:var(--text);font-size:15px;font-weight:600">${data.businessName}</div>
+        <div style="color:var(--muted);font-size:11px">${data.period} · Agent: ${data.agentName}</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+        ${statCard('Total Interactions', data.summary.totalInteractions, 'var(--primary)')}
+        ${statCard('Confirmed Orders', data.summary.verifiedOrders, 'var(--green)')}
+        ${statCard('Conversion Rate', data.summary.conversionRate, 'var(--primary)')}
+      </div>
+
+      <div style="background:var(--s2);border-radius:8px;padding:14px;margin-bottom:12px;">
+        <div style="color:var(--primary);font-size:10px;font-weight:600;letter-spacing:.1em;margin-bottom:10px;">REVENUE</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="color:var(--muted);font-size:12px">Confirmed</span>
+          <span style="color:var(--green);font-weight:600;font-size:12px">${data.revenue.formatted.confirmed}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="color:var(--muted);font-size:12px">Pending</span>
+          <span style="color:var(--amber);font-weight:600;font-size:12px">${data.revenue.formatted.pending}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border);">
+          <span style="color:var(--text);font-size:12px;font-weight:600">Total</span>
+          <span style="color:var(--text);font-weight:700;font-size:13px">${data.revenue.formatted.total}</span>
+        </div>
+      </div>
+
+      <div style="background:var(--s2);border-radius:8px;padding:14px;margin-bottom:12px;">
+        <div style="color:var(--primary);font-size:10px;font-weight:600;letter-spacing:.1em;margin-bottom:10px;">CHANNELS</div>
+        ${channelRow('📞 Voice Calls', data.channels.calls)}
+        ${channelRow('💬 WhatsApp', data.channels.whatsapp)}
+        ${channelRow('✉ SMS', data.channels.sms)}
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);color:var(--muted);font-size:11px">
+          Peak: ${data.peakDay}
+        </div>
+      </div>
+
+      ${data.insights.length ? `
+      <div style="background:var(--s2);border-radius:8px;padding:14px;">
+        <div style="color:var(--primary);font-size:10px;font-weight:600;letter-spacing:.1em;margin-bottom:10px;">INSIGHTS</div>
+        ${data.insights.map(i => `<div style="color:var(--muted);font-size:11px;margin-bottom:6px;padding-left:10px;border-left:2px solid var(--primary)">• ${i}</div>`).join('')}
+      </div>` : ''}
+    `;
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--red);text-align:center;padding:20px">Failed to load report.</div>`;
+  }
+}
+
+function statCard(label, value, color) {
+  return `<div style="background:var(--s2);border-radius:8px;padding:12px;text-align:center;">
+    <div style="color:${color};font-size:18px;font-weight:700">${value}</div>
+    <div style="color:var(--muted);font-size:10px;margin-top:4px">${label}</div>
+  </div>`;
+}
+function channelRow(label, val) {
+  return `<div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+    <span style="color:var(--muted);font-size:11px">${label}</span>
+    <span style="color:var(--text);font-weight:600;font-size:11px">${val}</span>
+  </div>`;
+}
+</script>
+
+<script>
+// ── Availability & Menu Management ───────────────────────
+let menuItems = [];
+
+function renderAvailability() {
+  const grid = document.getElementById('avail-grid');
+  if (!cd || !cd.menuOrServices || cd.menuOrServices.length === 0) {
+    grid.innerHTML = `
+      <div style="padding:20px;text-align:center;">
+        <div style="color:var(--muted);font-size:13px;margin-bottom:12px;">No menu items yet.</div>
+        <button class="btn btn-p" onclick="openAddItemModal()" style="font-size:11px;padding:8px 16px;">+ Add Your First Item</button>
+      </div>`;
+    return;
+  }
+  menuItems = cd.menuOrServices;
+  // Group by category
+  const categories = [...new Set(menuItems.map(i => i.category || 'General'))];
+  grid.innerHTML = categories.map(cat => {
+    const catItems = menuItems.filter(i => (i.category || 'General') === cat);
+    return `
+      <div style="margin-bottom:16px;">
+        <div style="font-size:9px;color:var(--dim);letter-spacing:.15em;text-transform:uppercase;padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:6px;">${cat}</div>
+        ${catItems.map(item => {
+          const idx   = menuItems.indexOf(item);
+          const avail = item.available !== false;
+          return `
+            <div class="avail-item ${avail ? '' : 'unavail'}" id="avail-row-${idx}"
+              style="display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,0.03);">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                  ${item.name}${item.price ? ' <span style="color:var(--secondary);font-family:\'Cormorant Garamond\',serif;">₦' + Number(item.price).toLocaleString() + '</span>' : ''}
+                </div>
+                ${item.description ? `<div style="font-size:11px;color:var(--dim);margin-top:2px;">${item.description}</div>` : ''}
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:12px;">
+                <label class="avail-toggle">
+                  <input type="checkbox" ${avail ? 'checked' : ''} onchange="toggleItem('${item.name.replace(/'/g,"\\'")}', this.checked, ${idx})"/>
+                  <span class="avail-slider"></span>
+                </label>
+                <button onclick="deleteMenuItem('${item.name.replace(/'/g,"\\'")}')" title="Delete item"
+                  style="background:none;border:1px solid var(--border);border-radius:5px;padding:4px 7px;color:var(--muted);cursor:pointer;font-size:11px;transition:all .2s;"
+                  onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'"
+                  onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">✕</button>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  }).join('');
+}
+
+async function toggleItem(itemName, available, idx) {
+  const row = document.getElementById('avail-row-' + idx);
+  try {
+    const res  = await fetch('/api/client/availability', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ itemName, available }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      cd.menuOrServices[idx].available = available;
+      menuItems[idx].available         = available;
+      row.classList.toggle('unavail', !available);
+      toast(available ? '✅' : '✗', itemName + (available ? ' — available' : ' — unavailable'));
+    } else {
+      row.querySelector('input').checked = !available;
+      toast('⚠', data.error || 'Update failed');
+    }
+  } catch(e) {
+    row.querySelector('input').checked = !available;
+    toast('⚠', 'Connection error');
+  }
+}
+
+async function resetAvailability() {
+  if (!confirm('Reset all items to available?')) return;
+  try {
+    const res  = await fetch('/api/client/availability/reset', { method: 'POST', credentials: 'include' });
+    const data = await res.json();
+    if (data.success) {
+      cd.menuOrServices = cd.menuOrServices.map(i => ({ ...i, available: true }));
+      renderAvailability();
+      toast('✅', 'All items reset to available');
+    }
+  } catch(e) { toast('⚠', 'Reset failed'); }
+}
+
+// ── Add Item ─────────────────────────────────────────────
+function openAddItemModal() {
+  ['ni-name','ni-cat','ni-price','ni-desc'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('ni-err').style.display = 'none';
+  document.getElementById('add-item-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('ni-name').focus(), 100);
+}
+
+function closeAddItemModal() {
+  document.getElementById('add-item-modal').style.display = 'none';
+}
+
+async function submitAddItem() {
+  const name  = document.getElementById('ni-name').value.trim();
+  const cat   = document.getElementById('ni-cat').value.trim();
+  const price = document.getElementById('ni-price').value;
+  const desc  = document.getElementById('ni-desc').value.trim();
+  const errEl = document.getElementById('ni-err');
+
+  if (!name) {
+    errEl.textContent = 'Item name is required.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const res  = await fetch('/api/client/menu', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ name, category: cat || 'General', price: parseFloat(price)||0, description: desc }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      cd.menuOrServices = data.menu;
+      closeAddItemModal();
+      renderAvailability();
+      toast('✅', `${name} added to menu`);
+    } else {
+      errEl.textContent = data.error || 'Failed to add item.';
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = 'Network error. Try again.';
+    errEl.style.display = 'block';
+  }
+}
+
+// ── Delete Item ───────────────────────────────────────────
+async function deleteMenuItem(itemName) {
+  if (!confirm(`Remove "${itemName}" from the menu?`)) return;
+  try {
+    const res  = await fetch(`/api/client/menu/${encodeURIComponent(itemName)}`, {
+      method: 'DELETE', credentials: 'include',
+    });
+    const data = await res.json();
+    if (data.success) {
+      cd.menuOrServices = data.menu;
+      renderAvailability();
+      toast('✗', `${itemName} removed`);
+    } else {
+      toast('⚠', data.error || 'Delete failed');
+    }
+  } catch(e) { toast('⚠', 'Connection error'); }
+}
+
+// ── Real-time socket updates ──────────────────────────────
+if (typeof s !== 'undefined') {
+  s.on('availability_updated', ({ itemName, available }) => {
+    const idx = cd?.menuOrServices?.findIndex(i => i.name === itemName);
+    if (idx !== undefined && idx > -1) {
+      cd.menuOrServices[idx].available = available;
+      renderAvailability();
+    }
+  });
+  s.on('availability_reset', () => {
+    if (cd?.menuOrServices) {
+      cd.menuOrServices = cd.menuOrServices.map(i => ({ ...i, available: true }));
+      renderAvailability();
+    }
+  });
+}
+</script>
+</body>
+</html>
