@@ -436,9 +436,10 @@ function addAct({e,t,ts}){
 }
 
 function sv(v){
-  ["dash","orders","payments"].forEach(n=>document.getElementById("v-"+n).style.display=n===v?"":"none");
+  ["dash","orders","payments","availability"].forEach(n=>document.getElementById("v-"+n).style.display=n===v?"":"none");
   if(v==="dash"){loadStats();renderOrders();}
   if(v==="payments")renderPays();
+  if(v==="availability")renderAvailability();
 }
 
 function toast(ico,msg){
