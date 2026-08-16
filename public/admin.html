@@ -242,10 +242,10 @@ button.lb:hover{background:var(--gold-l);}
 
   <aside class="sidebar">
     <div class="nlbl">Platform</div>
-    <div class="ni on" onclick="view('overview')">⊞ Overview <span class="nbadge" id="nb-t">—</span></div>
-    <div class="ni" onclick="view('clients')">🏛 Clients <span class="nbadge g" id="nb-a">—</span></div>
-    <div class="ni" onclick="view('pending')">⏳ Pending <span class="nbadge r" id="nb-p">—</span></div>
-    <div class="ni" onclick="view('orders')">📋 All Orders</div>
+    <div class="ni on" onclick="view('overview')"> Overview <span class="nbadge" id="nb-t">—</span></div>
+    <div class="ni" onclick="view('clients')"> Clients <span class="nbadge g" id="nb-a">—</span></div>
+    <div class="ni" onclick="view('pending')"> Pending <span class="nbadge r" id="nb-p">—</span></div>
+    <div class="ni" onclick="view('orders')"> All Orders</div>
     <div class="nlbl">Actions</div>
     <div class="ni" onclick="view('add')">＋ Add Client</div>
     <div class="sf">
@@ -484,9 +484,25 @@ let currentBrand = null;
 
 // ── Auth ──────────────────────────────────────
 async function doLogin() {
-  const res = await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:document.getElementById('apw').value})});
-  if (res.ok) { document.getElementById('login').style.display='none'; document.getElementById('app').classList.add('on'); init(); }
-  else document.getElementById('aerr').style.display='block';
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ password: document.getElementById('apw').value })
+    });
+    if (res.ok) {
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('app').classList.add('on');
+      init();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      document.getElementById('aerr').textContent = err.error || 'Wrong password.';
+      document.getElementById('aerr').style.display = 'block';
+    }
+  } catch (e) {
+    document.getElementById('aerr').textContent = 'Network error: ' + e.message;
+    document.getElementById('aerr').style.display = 'block';
+  }
 }
 async function doLogout() { await fetch('/api/admin/logout',{method:'POST'}); location.reload(); }
 
